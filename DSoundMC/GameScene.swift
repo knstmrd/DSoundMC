@@ -25,25 +25,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var left_wall = SKSpriteNode()
     var right_wall = SKSpriteNode()
     
+    let tapRec = UITapGestureRecognizer()
+    
     
     let osc1 = AKOscillator()
     let osc2 = AKOscillator()
     let mixer = AKMixer()
     
     override func didMove(to view: SKView) {
-        
-        
-        
-        let particle = SKShapeNode(circleOfRadius: 30.0)
-        particle.position = CGPoint(x: 100, y: 100)
-        particle.strokeColor = UIColor.yellow
-        particle.physicsBody = SKPhysicsBody(circleOfRadius: 30.0)
-        
-        
-        particle.physicsBody?.categoryBitMask = particle_mask
-//        particle.physicsBody?.contactTestBitMask = left_wall_mask | right_wall_mask | upper_wall_mask | lower_wall_mask
-        particle.physicsBody?.collisionBitMask = particle_mask
-        
         if let lower_wall_obj = self.childNode(withName: "lower_wall") as? SKSpriteNode {
             lower_wall = lower_wall_obj
         }
@@ -69,10 +58,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         left_wall.physicsBody?.categoryBitMask = left_wall_mask
         left_wall.physicsBody?.contactTestBitMask = particle_mask
         
+        let particle = SKShapeNode(circleOfRadius: 30.0)
+        particle.position = CGPoint(x: 100, y: 100)
+        particle.strokeColor = UIColor.yellow
+        particle.physicsBody = SKPhysicsBody(circleOfRadius: 30.0)
+        
+        particle.physicsBody?.categoryBitMask = particle_mask
+        particle.physicsBody?.collisionBitMask = particle_mask
+        
         particle.physicsBody?.velocity = CGVector(dx: -500, dy: 200)
         particle.name = "particle"
         
         self.addChild(particle)
+        
         self.physicsWorld.contactDelegate = self
         self.physicsWorld.gravity = CGVector(dx: 0.0, dy: -0.1)
         
@@ -82,7 +80,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         mixer.connect(input: osc1)
         mixer.connect(input: osc2)
         mixer.volume /= 5.0
-        //        mixer = AKMixer(osc1, osc2)
+        
+        tapRec.addTarget(self, action:#selector(GameScene.tapAdd(_:) ))
+        tapRec.numberOfTouchesRequired = 1
+        tapRec.numberOfTapsRequired = 1
+        self.view!.addGestureRecognizer(tapRec)
         
         AudioKit.output = mixer
         osc1.start()
@@ -117,9 +119,27 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
-    
     override func update(_ currentTime: TimeInterval) {
         osc1.frequency = min_osc_freq + abs(Double((self.childNode(withName: "particle")?.physicsBody!.velocity.dx)!))
         osc2.frequency = min_osc_freq + abs(Double((self.childNode(withName: "particle")?.physicsBody!.velocity.dy)!))
+    }
+    
+    @objc func tapAdd(_ sender:UITapGestureRecognizer) {
+        let point:CGPoint = sender.location(in: self.view)
+        let pointconv = convertPoint(fromView: point)
+//        convert(point, to: self)
+        print(point, pointconv)
+        let particle = SKShapeNode(circleOfRadius: 30.0)
+        particle.position = CGPoint(x: pointconv.x, y: pointconv.y)
+        particle.strokeColor = UIColor.yellow
+        particle.physicsBody = SKPhysicsBody(circleOfRadius: 30.0)
+        
+        particle.physicsBody?.categoryBitMask = particle_mask
+        particle.physicsBody?.collisionBitMask = particle_mask
+        
+        particle.physicsBody?.velocity = CGVector(dx: 400, dy: 400)
+        
+        self.addChild(particle)
+        
     }
 }
