@@ -18,7 +18,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     let upper_wall_mask : UInt32 = 0x1 << 4
     let lower_wall_mask : UInt32 = 0x1 << 5
     
-    let min_osc_freq = 40
+    let min_osc_freq = 40.0
+    let max_osc_freq = 1200.0
+    let max_vel_projection : UInt32 = 400
     
     var lower_wall = SKSpriteNode()
     var upper_wall = SKSpriteNode()
@@ -102,8 +104,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     override func update(_ currentTime: TimeInterval) {
         for (index, particle) in particle_arr.enumerated() {
-            osc1_arr[index].frequency = min_osc_freq + abs(Double(particle.physicsBody!.velocity.dx))
-            osc2_arr[index].frequency = min_osc_freq + abs(Double(particle.physicsBody!.velocity.dy))
+            osc1_arr[index].frequency = min(min_osc_freq + abs(Double(particle.physicsBody!.velocity.dx)), max_osc_freq)
+            osc2_arr[index].frequency = min(min_osc_freq + abs(Double(particle.physicsBody!.velocity.dy)), max_osc_freq)
         }
     }
     
@@ -119,15 +121,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         particle.physicsBody?.categoryBitMask = particle_mask
         particle.physicsBody?.collisionBitMask = particle_mask
         
-        particle.physicsBody?.velocity = CGVector(dx: 400, dy: 400)
+        let vel_x : Int = Int(arc4random_uniform(max_vel_projection*2+1) ) - Int(max_vel_projection)
+        let vel_y : Int = Int(arc4random_uniform(max_vel_projection*2+1) ) - Int(max_vel_projection)
+        print(vel_x, vel_y)
+        
+        particle.physicsBody?.velocity = CGVector(dx: vel_x, dy: vel_y)
         
         particle_arr.append(particle)
         num_of_particles += 1
         
         let osc1 = AKOscillator()
         let osc2 = AKOscillator()
-        osc1.frequency = min_osc_freq + abs(Double(particle.physicsBody!.velocity.dx))
-        osc2.frequency = min_osc_freq + abs(Double(particle.physicsBody!.velocity.dy))
+        osc1.frequency = min(min_osc_freq + abs(Double(particle.physicsBody!.velocity.dx)), max_osc_freq)
+        osc2.frequency = min(min_osc_freq + abs(Double(particle.physicsBody!.velocity.dy)), max_osc_freq)
         
         mixer.connect(input: osc1)
         mixer.connect(input: osc2)
